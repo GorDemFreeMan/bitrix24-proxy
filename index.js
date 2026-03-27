@@ -8,12 +8,16 @@ const config = {
   bitrixUrl: process.env.BITRIX24_API_URL || 'https://corp.ekopromgroup.ru/rest/72/xd6q0ozgoplsrbv1',
   botId: process.env.BITRIX24_BOT_ID || '836',
   clientId: process.env.BITRIX24_CLIENT_ID || 'cq4fa3osunavthb6rfu35xjphhcz05y',
-  openaiKey: process.env.OPENAI_API_KEY || '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',
+  openaiKey: process.env.OPENAI_API_KEY,
   qdrantUrl: process.env.QDRANT_URL || 'https://qdrant-production-93ad.up.railway.app',
   qdrantCollection: process.env.QDRANT_COLLECTION || 'ekoprom_knowledge',
-  groqKey: process.env.GROQ_API_KEY || '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',
-  groqModel: 'llama-3.3-70b-versatile',
+  groqKey: process.env.GROQ_API_KEY,
+  groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
 };
+
+// Validate required keys at startup
+if (!config.openaiKey) throw new Error('OPENAI_API_KEY is required');
+if (!config.groqKey) throw new Error('GROQ_API_KEY is required');
 
 // Middleware: validate hook secret
 function validateHook(req, res, next) {
@@ -138,11 +142,9 @@ app.post(
     res.json({ ok: true });
 
     try {
-      // Step 1: Generate embedding
       console.log('[Step 1] Generating embedding...');
       const embedding = await getEmbedding(message);
 
-      // Step 2: Search Qdrant
       console.log('[Step 2] Searching Qdrant...');
       const results = await searchQdrant(embedding);
 
@@ -152,15 +154,12 @@ app.post(
         return;
       }
 
-      // Step 3: Format context
       const context = formatContext(results);
       console.log(`[Found ${results.length}] sources`);
 
-      // Step 4: Generate response
       console.log('[Step 3] Generating LLM response...');
       const response = await generateResponse(context, message);
 
-      // Step 5: Send to Bitrix24
       await sendToBitrix(dialog_id, response);
       console.log('[OK] Response sent');
 
