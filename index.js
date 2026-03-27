@@ -56,22 +56,28 @@ async function getEmbedding(text) {
 }
 
 // Search Qdrant
-async function searchQdrant(embedding, topK = 7, minScore = 0.72) {
-  const response = await axios.post(
-    `${config.qdrantUrl}/collections/${config.qdrantCollection}/points/search`,
-    {
-      vector: embedding,
-      limit: topK,
-      score_threshold: minScore,
-      with_payload: true,
-      with_vectors: false
-    },
-    {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 15000
-    }
-  );
-  return response.data.result || [];
+async function searchQdrant(embedding, topK = 7, minScore = 0.5) {
+  try {
+    const response = await axios.post(
+      `${config.qdrantUrl}/collections/${config.qdrantCollection}/points/search`,
+      {
+        vector: embedding,
+        limit: topK,
+        score_threshold: minScore,
+        with_payload: true,
+        with_vectors: false
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 15000
+      }
+    );
+    console.log(`[Qdrant] Found ${response.data.result?.length || 0} results`);
+    return response.data.result || [];
+  } catch (err) {
+    console.error('[Qdrant ERROR]', err.response?.data || err.message);
+    return [];
+  }
 }
 
 // Generate response via Groq LLM
@@ -164,11 +170,11 @@ app.post(
       console.log('[OK] Response sent');
 
     } catch (err) {
-      console.error('[ERROR]', err.message);
+      console.error('[ERROR]', err.response?.data || err.message);
       try {
         await sendToBitrix(dialog_id, 'Сервис временно недоступен. Попробуйте позже.');
       } catch (e) {
-        console.error('[FALLBACK ERROR]', e.message);
+        console.error('[FALLBACK ERROR]', e.response?.data || e.message);
       }
     }
   }
