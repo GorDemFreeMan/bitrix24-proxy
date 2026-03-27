@@ -135,7 +135,7 @@ function formatContext(results) {
 
 // Bitrix24 webhook endpoint
 app.post(
-  '/webhook/6eff4cd1-e50a-4727-905d-dca7eded094e',
+  '/bitrix24-hook-2026',
   validateHook,
   async (req, res) => {
     const { message, user_id, dialog_id, message_id } = req.body;
