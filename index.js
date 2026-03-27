@@ -8,12 +8,11 @@ const config = {
   bitrixUrl: process.env.BITRIX24_API_URL || 'https://corp.ekopromgroup.ru/rest/72/xd6q0ozgoplsrbv1',
   botId: process.env.BITRIX24_BOT_ID || '836',
   clientId: process.env.BITRIX24_CLIENT_ID || 'cq4fa3osunavthb6rfu35xjphhcz05y',
-  openaiKey: process.env.OPENAI_API_KEY,
+  openaiKey: process.env.OPENAI_API_KEY || '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',
   qdrantUrl: process.env.QDRANT_URL || 'https://qdrant-production-93ad.up.railway.app',
   qdrantCollection: process.env.QDRANT_COLLECTION || 'ekoprom_knowledge',
-  modelEndpoint: 'https://api.minimax.chat/v1/text/chatcompletion_v2',
-  modelApiKey: process.env.MINIMAX_API_KEY,
-  modelId: process.env.MINIMAX_MODEL_ID || 'MiniMax-M2.7',
+  groqKey: process.env.GROQ_API_KEY || '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',
+  groqModel: 'llama-3.3-70b-versatile',
 };
 
 // Middleware: validate hook secret
@@ -71,7 +70,7 @@ async function searchQdrant(embedding, topK = 7, minScore = 0.72) {
   return response.data.result || [];
 }
 
-// Generate response via MiniMax LLM
+// Generate response via Groq LLM
 async function generateResponse(context, question) {
   const systemPrompt = `Ты — корпоративный AI-ассистент ООО «ЭкоПром СПб».
 Твоё имя — Администратор.
@@ -91,9 +90,9 @@ async function generateResponse(context, question) {
 8. Максимум 800 символов.`;
 
   const response = await axios.post(
-    config.modelEndpoint,
+    'https://api.groq.com/openai/v1/chat/completions',
     {
-      model: config.modelId,
+      model: config.groqModel,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Контекст из базы знаний:\n${context}\n\nВопрос: ${question}` }
@@ -103,7 +102,7 @@ async function generateResponse(context, question) {
     },
     {
       headers: {
-        'Authorization': `Bearer ${config.modelApiKey}`,
+        'Authorization': `Bearer ${config.groqKey}`,
         'Content-Type': 'application/json'
       },
       timeout: 60000
