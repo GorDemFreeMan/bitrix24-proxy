@@ -1,0 +1,9 @@
+[railway]
+  service = "bitrix24-proxy"
+  environment = "production"
+
+[build]
+  builder = "NIXPACKS"
+
+[nixpacks]
+  node_version = "20"
